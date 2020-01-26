@@ -1,4 +1,4 @@
-const { age , date } = require('../../lib/utils')//aui é logica de idade
+const { age , date } = require('../../lib/utils')//arquivo de logica de ano e idade
 const Instructors = require('../models/instructors')
 
 module.exports = {
