@@ -1,81 +1,116 @@
-const { age , date } = require('../../lib/utils')
 const db = require('../../config/db')
+const {
+    age,
+    date
+} = require('../../lib/utils')
+
 
 module.exports = {
-    all(callback){
-        db.query(`SELECT * FROM instructors` , function(err , results){
-            if(err) return  res.send('Database is error')
+    all(callback) {
+                //ISSO SERVE PARA QUASE TODOS(lENDO CÓDIGO ABAIXO)
+                //seleciona tudo de members ,  e do instructors só o nome ... e muda para instructors_name
+                //pega a tabela members
+                //Faça a junção da tabela instructors ON (relação das tabelas que vão fazer elas se interligarem
+        db.query(`
+        SELECT members.*, instructors.name AS instructors_name 
+        FROM members
+        LEFT JOIN instructors ON (instructors.id = members.instructors_id)
+        `, (err, results) => {
+            if (err) throw `Database is ERRO ${err}`
 
             callback(results.rows)
         })
     },
-    create(data, callback){
+    create(data, callback) {
         const query = `
-        INSERT INTO instructors (
-            name,
+        INSERT INTO members(
             avatar_url,
-            sex,
-            services,
+            name,
             birth,
-            create_at
-        ) VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id
+            email,
+            sex,
+            blood,
+            weight,
+            height,
+            instructors_id
+            ) VALUES($1, $2, $3, $4, $5, $6 , $7 , $8 , $9 )
+         RETURNING id
         `
-
         const values = [
-            data.name,
             data.avatar_url,
-            data.sex,
-            data.services,
+            data.name,
             date(data.birth).iso,
-            date(data.create_at).iso,
+            data.email,
+            data.sex,
+            data.blood,
+            data.weight,
+            data.height,
+            data.instructor
         ]
 
-        db.query(query, values, function(err , results){
-            if(err) return res.send('erro')
 
-            callback(results.rows[0]);
+        db.query(query, values, (err, results) => {
+            if (err) throw `Database is error ${err}`
+
+            callback(results.rows[0])
         })
     },
-    find(id , callback){
-       
-        db.query(`SELECT * FROM instructors WHERE id = $1` , [id] , (err ,results) =>{
-            if(err) return res.send('Database is erro')
+    find(id, callback) {
+        db.query(`
+        SELECT members.*, instructors.name AS instructors_name
+        FROM members 
+        LEFT JOIN instructors ON (members.instructors_id = instructors.id)
+        WHERE members.id = $1`, [id], (err, results) => {
+            if (err) throw `Database is ERROR ${err}`
 
-            callback( results.rows[0] )
+            callback(results.rows[0])
         })
     },
-    update(data, callback){
+    update(data, callback) {
         const query = `
-        UPDATE instructors SET
+        UPDATE members SET
             avatar_url=($1),
             name=($2),
-            birth=($3),
+            email=($3),
             sex=($4),
-            services=($5)
-        WHERE id= $6
-        ` 
-        
+            birth=($5),
+            blood=($6),
+            weight=($7),
+            height=($8),
+            instructors_id=($9)
+        WHERE id = $10
+        `
         const values = [
             data.avatar_url,
             data.name,
-            date(data.birth).iso,
+            data.email,
             data.sex,
-            data.services,
+            date(data.birth).iso,
+            data.blood,
+            data.weight,
+            data.height,
+            data.instructor,
             data.id,
         ]
-        
-        db.query(query, values , function(err , results){
-            if(err) throw `DATABASE IS ERRO  ${err}`
+
+        db.query(query, values, (err, results) => {
+            if (err) throw `Database is ERROR ${err}`
 
             callback()
         })
     },
-    delete(id , callback){
-        db.query(`DELETE FROM instructors WHERE id= $1` , [id] , (err, results)=>{
-            if(err) throw `Database is error ${err}`
+    delete(id, callback) {
+        db.query(`DELETE FROM members WHERE id = $1`, [id], (err, results) => {
+            if (err) throw `Database is error ${err}`
 
             callback()
+        })
+    },
+    instructorSelectOption(callback) {
+        db.query(`SELECT name,id FROM instructors`, (err, results) => {
+            if (err) throw `Database is ${err}`
+
+            callback(results.rows)
         })
     }
 }
